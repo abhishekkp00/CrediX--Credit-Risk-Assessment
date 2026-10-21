@@ -1,0 +1,39 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Environment/config files
+.env
+.env.*
+
+# Package/build artifacts
+*.egg-info/
+.dist/
+build/
+dist/
+
+# Jupyter/IPython
+.ipynb_checkpoints/
+
+# Model and data artifacts
+*.pkl
+*.joblib
+credit_risk_model.pkl
+best_threshold.pkl
+
+# VS Code/editor files
+.vscode/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
