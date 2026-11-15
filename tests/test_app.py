@@ -126,3 +126,4 @@ def test_threshold_outside_valid_range_fails_startup(monkeypatch):
     with pytest.raises(ValueError, match="CREDIX_THRESHOLD"):
         with configured_client(monkeypatch, env_threshold=1.0):
             pass
+    assert app_module.ml_model == {}
