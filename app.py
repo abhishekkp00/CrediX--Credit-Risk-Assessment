@@ -16,17 +16,28 @@ ml_model = {}
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    model_path = BASE_DIR / "credit_risk_model.pkl"
-    threshold_path = BASE_DIR / "best_threshold.pkl"
-    ml_model["model"] = joblib.load(model_path)
-    saved_threshold = float(joblib.load(threshold_path))
-    configured_threshold = os.getenv("CREDIX_THRESHOLD")
-    threshold = saved_threshold if configured_threshold is None else float(configured_threshold)
-    if not 0.0 < threshold < 1.0:
-        raise ValueError("CREDIX_THRESHOLD must be a number strictly between 0 and 1.")
-    ml_model["threshold"] = threshold
-    yield
-    ml_model.clear()
+    try:
+        model_path = BASE_DIR / "credit_risk_model.pkl"
+        threshold_path = BASE_DIR / "best_threshold.pkl"
+
+        saved_threshold = float(joblib.load(threshold_path))
+        configured_threshold = os.getenv("CREDIX_THRESHOLD")
+        threshold = (
+            saved_threshold
+            if configured_threshold is None
+            else float(configured_threshold)
+        )
+        if not 0.0 < threshold < 1.0:
+            raise ValueError(
+                "CREDIX_THRESHOLD must be a number strictly between 0 and 1."
+            )
+
+        model = joblib.load(model_path)
+        ml_model["model"] = model
+        ml_model["threshold"] = threshold
+        yield
+    finally:
+        ml_model.clear()
 
 
 app = FastAPI(
@@ -67,12 +78,19 @@ def health_check():
 @app.post("/predict")
 def predict(data: LoanApplication):
     if "model" not in ml_model or "threshold" not in ml_model:
-        raise HTTPException(status_code=503, detail="The prediction model is not loaded.")
+        raise HTTPException(
+            status_code=503,
+            detail="The prediction model is not loaded.",
+        )
+
     try:
         input_df = pd.DataFrame([data.model_dump()])
-        probability = float(ml_model["model"].predict_proba(input_df)[0, 1])
+        probability = float(
+            ml_model["model"].predict_proba(input_df)[0, 1]
+        )
         threshold = ml_model["threshold"]
         prediction = int(probability >= threshold)
+
         return {
             "default_probability": probability,
             "default_prediction": prediction,
@@ -80,7 +98,14 @@ def predict(data: LoanApplication):
             "result": "High Risk" if prediction else "Low Risk",
         }
     except (ValueError, KeyError) as exc:
-        raise HTTPException(status_code=400, detail=f"Prediction failed: {exc}") from exc
+        raise HTTPException(
+            status_code=400,
+            detail=f"Prediction failed: {exc}",
+        ) from exc
 
 
-app.mount("/", StaticFiles(directory=str(BASE_DIR / "static"), html=True), name="static")
+app.mount(
+    "/",
+    StaticFiles(directory=str(BASE_DIR / "static"), html=True),
+    name="static",
+)
