@@ -127,7 +127,18 @@ Example response (illustrative):
 
 `Credit_Risk.ipynb` contains the data analysis, preprocessing, model training, evaluation, threshold selection, probability calibration, SHAP interpretation, and model serialization workflow.
 
-The SHAP section uses the preprocessing pipeline fitted inside the calibrated estimator so that feature explanations correspond to the calibrated model served by the API. Re-run the notebook cells from calibration onward to refresh saved plots and outputs.
+The SHAP section uses a model-agnostic explainer around the calibrated model's `predict_proba` method. Its feature contributions therefore target the calibrated default probability returned by the API, rather than only the underlying uncalibrated XGBoost score. To keep notebook execution manageable, it explains a reproducible sample of up to 100 test applicants. Re-run the notebook cells from calibration onward to refresh saved plots and outputs.
+
+## Tests
+
+Install the development dependencies and run the API regression suite:
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest -q
+```
+
+The suite covers the health check, frontend serving, API schema, prediction output, threshold selection and validation, request validation, and the unavailable-model response.
 
 ## Notes
 
